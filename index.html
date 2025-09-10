@@ -102,25 +102,40 @@
     function showLoader() { document.getElementById("loader").style.display = "flex"; }
     function hideLoader() { document.getElementById("loader").style.display = "none"; }
 
-    async function loadAttendance() {
-      showLoader();
-      const res = await fetch(SCRIPT_URL + "?action=getMonthlyAttendance");
-      const data = await res.json();
-      buildTable(data);
-      hideLoader();
-    }
+    // Fetch attendance data
+async function loadAttendance() {
+  try {
+    const res = await fetch(`${SCRIPT_URL}?action=getMonthlyAttendance`, {
+      method: "GET",
+      mode: "cors"
+    });
+    const text = await res.text();   // 👈 debug: first read raw text
+    console.log("Raw response:", text);
+    const data = JSON.parse(text);
+    console.log("Parsed JSON:", data);
+    buildTable(data);
+  } catch (err) {
+    console.error("Error loading attendance:", err);
+    document.getElementById("response").textContent = "Failed to load data!";
+  }
+}
 
-    async function submitAttendance(emp, status) {
-      showLoader();
-      const res = await fetch(SCRIPT_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "submitAttendance", emp, status }),
-        headers: { "Content-Type": "application/json" }
-      });
-      const msg = await res.text();
-      hideLoader();
-      document.getElementById("response").textContent = msg;
-    }
+    // Submit attendance
+async function submitAttendance(emp, status) {
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: "POST",
+      mode: "cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "submitAttendance", emp, status })
+    });
+    const result = await res.json();
+    document.getElementById("response").textContent = result.message || result.error;
+  } catch (err) {
+    console.error("Error submitting attendance:", err);
+    document.getElementById("response").textContent = "Failed to submit!";
+  }
+}
 
     function buildTable(data) {
       const { employees, dates, statusMap, today } = data;
@@ -203,7 +218,7 @@
     }
 
     // Start
-    loadAttendance();
+    window.onload = loadAttendance;
   </script>
 </body>
 </html>
