@@ -96,64 +96,52 @@
     </table>
   </div>
 
-  <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyQV9lJ0M-pEFvHOHPbriIFIJ4Jw-15HvTJMfcG_R-SvY5akfCOrv2xNtslBUoWW4e7oA/exec"; // <-- paste your /exec URL here
+<script>
+    // 🔗 Replace with your GAS Web App URL
+    const API_URL = "https://script.google.com/macros/s/AKfycbyQV9lJ0M-pEFvHOHPbriIFIJ4Jw-15HvTJMfcG_R-SvY5akfCOrv2xNtslBUoWW4e7oA/exec";
 
-    function showLoader() { document.getElementById("loader").style.display = "flex"; }
-    function hideLoader() { document.getElementById("loader").style.display = "none"; }
+    // ✅ Loader helpers
+    function showLoader() {
+      document.getElementById("loader").style.display = "flex";
+    }
+    function hideLoader() {
+      document.getElementById("loader").style.display = "none";
+    }
 
-    // Fetch attendance data
-async function loadAttendance() {
-  try {
-    const res = await fetch(`${SCRIPT_URL}?action=getMonthlyAttendance`, {
-      method: "GET",
-      mode: "cors"
-    });
-    const text = await res.text();   // 👈 debug: first read raw text
-    console.log("Raw response:", text);
-    const data = JSON.parse(text);
-    console.log("Parsed JSON:", data);
-    buildTable(data);
-  } catch (err) {
-    console.error("Error loading attendance:", err);
-    document.getElementById("response").textContent = "Failed to load data!";
-  }
-}
+    // ✅ API Calls
+    async function getMonthlyAttendance() {
+      const res = await fetch(API_URL + "?action=getMonthlyAttendance");
+      return await res.json();
+    }
 
-    // Submit attendance
-async function submitAttendance(emp, status) {
-  try {
-    const res = await fetch(SCRIPT_URL, {
-      method: "POST",
-      mode: "cors",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "submitAttendance", emp, status })
-    });
-    const result = await res.json();
-    document.getElementById("response").textContent = result.message || result.error;
-  } catch (err) {
-    console.error("Error submitting attendance:", err);
-    document.getElementById("response").textContent = "Failed to submit!";
-  }
-}
+    async function submitAttendance(employeeName, status) {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ employeeName, status })
+      });
+      return await res.json();
+    }
 
+    // ✅ Table Builder
     function buildTable(data) {
+      hideLoader();
       const { employees, dates, statusMap, today } = data;
       const headerRowDates = document.getElementById("headerRowDates");
       const headerRowDays = document.getElementById("headerRowDays");
       const tbody = document.querySelector("#attendanceTable tbody");
 
-      // Month-Year Title
+      // Title
       const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
       const d = new Date(today);
-      document.getElementById("title").textContent =
-        "Attendance (" + monthNames[d.getMonth()] + "-" + d.getFullYear() + ")";
+      document.getElementById("title").textContent = 
+        `Attendance (${monthNames[d.getMonth()]}-${d.getFullYear()})`;
 
       // Reset headers
       headerRowDates.innerHTML = '<th rowspan="2">#</th><th rowspan="2">Name</th>';
       headerRowDays.innerHTML = "";
 
-      // Fill header rows
+      // Headers
       dates.forEach(dateKey => {
         const dateObj = new Date(dateKey);
         const day = dateObj.getDay();
@@ -172,19 +160,12 @@ async function submitAttendance(emp, status) {
         headerRowDays.appendChild(thDay);
       });
 
-      // Fill rows
+      // Body
       tbody.innerHTML = "";
       let count = 1;
       employees.forEach(emp => {
         const tr = document.createElement("tr");
-
-        const tdIndex = document.createElement("td");
-        tdIndex.textContent = count++;
-        tr.appendChild(tdIndex);
-
-        const tdName = document.createElement("td");
-        tdName.textContent = emp;
-        tr.appendChild(tdName);
+        tr.innerHTML = `<td>${count++}</td><td>${emp}</td>`;
 
         dates.forEach(dateKey => {
           const td = document.createElement("td");
@@ -200,7 +181,12 @@ async function submitAttendance(emp, status) {
               if (status === opt) option.selected = true;
               select.appendChild(option);
             });
-            select.addEventListener("change", () => submitAttendance(emp, select.value));
+            select.addEventListener("change", async () => {
+              showLoader();
+              const result = await submitAttendance(emp, select.value);
+              hideLoader();
+              document.getElementById("response").textContent = result.message;
+            });
             td.appendChild(select);
             td.classList.add("today");
           } else {
@@ -209,6 +195,7 @@ async function submitAttendance(emp, status) {
             if (status === "A") td.classList.add("absent");
             if (status === "H") td.classList.add("holiday");
           }
+
           if (day === 0) td.classList.add("sunday");
           tr.appendChild(td);
         });
@@ -217,8 +204,13 @@ async function submitAttendance(emp, status) {
       });
     }
 
-    // Start
-    window.onload = loadAttendance;
+    // ✅ Init
+    window.onload = async function () {
+      showLoader();
+      const data = await getMonthlyAttendance();
+      buildTable(data);
+    };
   </script>
+
 </body>
 </html>
