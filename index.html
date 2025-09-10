@@ -1,95 +1,38 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Attendance</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attendance</title>
   <style>
-    body {
-      font-family: "Segoe UI", Arial, sans-serif;
-      background: #f9fafb;
-      margin: 0;
-      padding: 10px;
-      color: #333;
-    }
-    h2 {
-      text-align: center;
-      margin-bottom: 15px;
-      font-size: 1.3rem;
-      color: #007bff;
-    }
-    .table-container {
-      width: 100%;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      background: white;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      border-radius: 6px;
-      min-width: 600px;
-    }
-    thead {
-      background: #007bff;
-      color: white;
-      position: sticky;
-      top: 0;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 6px;
-      text-align: center;
-      font-size: 0.85rem;
-      white-space: nowrap;
-    }
-    .present { color: green; font-weight: bold; }
-    .absent { color: red; font-weight: bold; }
-    .holiday { color: blue; font-weight: bold; }
-    .sunday { background: tomato !important; color: white; font-weight: bold; }
-    td.today { background: #ebf1f7; font-weight: bold; }
-    select {
-      padding: 3px;
-      font-size: 0.8rem;
-    }
-    #response {
-      margin: 8px 0;
-      text-align: center;
-      font-weight: bold;
-      color: darkblue;
-    }
-    #loader {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(255,255,255,0.7);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      display: none;
-    }
-    .spinner {
-      border: 6px solid #f3f3f3;
-      border-top: 6px solid #007bff;
-      border-radius: 50%;
-      width: 40px; height: 40px;
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
+    body { font-family: "Segoe UI", Arial, sans-serif; margin:0; padding:10px; background:#f9fafb; }
+    h2 { text-align:center; margin-bottom:15px; color:#007bff; }
+    .table-container { width:100%; overflow-x:auto; }
+    table { border-collapse:collapse; width:100%; background:white; min-width:600px; box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+    th,td { border:1px solid #ddd; padding:6px; text-align:center; font-size:0.85rem; white-space:nowrap;}
+    thead { background:#007bff; color:white; position:sticky; top:0; }
+    .today { background:#ebf1f7; font-weight:bold; }
+    .present { color:green; font-weight:bold; }
+    .absent { color:red; font-weight:bold; }
+    .holiday { color:blue; font-weight:bold; }
+    .sunday { background:tomato !important; color:white; font-weight:bold; }
+    #response { margin:10px 0; text-align:center; font-weight:bold; color:darkblue; }
+    #loader { position:fixed; top:0; left:0; width:100%; height:100%; display:none; align-items:center; justify-content:center; background:rgba(255,255,255,0.7); z-index:9999;}
+    .spinner { border:6px solid #f3f3f3; border-top:6px solid #007bff; border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite;}
+    @keyframes spin {0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
   </style>
 </head>
 <body>
   <div id="loader"><div class="spinner"></div></div>
-
   <h2 id="title">Attendance</h2>
   <div id="response"></div>
-
   <div class="table-container">
     <table id="attendanceTable">
       <thead>
-        <tr id="headerRowDates"><th rowspan="2">#</th><th rowspan="2">Name</th></tr>
+        <tr id="headerRowDates">
+          <th rowspan="2">#</th>
+          <th rowspan="2">Name</th>
+        </tr>
         <tr id="headerRowDays"></tr>
       </thead>
       <tbody></tbody>
@@ -97,120 +40,107 @@
   </div>
 
 <script>
-    // 🔗 Replace with your GAS Web App URL
-    const API_URL = "https://script.google.com/macros/s/AKfycbyQV9lJ0M-pEFvHOHPbriIFIJ4Jw-15HvTJMfcG_R-SvY5akfCOrv2xNtslBUoWW4e7oA/exec";
+  // 🔗 Replace this with your deployed Apps Script Web App URL
+  const API_URL = "https://script.google.com/macros/s/AKfycbx1234567890/exec";
 
-    // ✅ Loader helpers
-    function showLoader() {
-      document.getElementById("loader").style.display = "flex";
-    }
-    function hideLoader() {
-      document.getElementById("loader").style.display = "none";
-    }
+  function showLoader(){ document.getElementById("loader").style.display="flex"; }
+  function hideLoader(){ document.getElementById("loader").style.display="none"; }
 
-    // ✅ API Calls
-    async function getMonthlyAttendance() {
-      const res = await fetch(API_URL + "?action=getMonthlyAttendance");
-      return await res.json();
-    }
+  async function getMonthlyAttendance(){
+    const res = await fetch(API_URL+"?action=getMonthlyAttendance");
+    return await res.json();
+  }
 
-    async function submitAttendance(employeeName, status) {
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ employeeName, status })
+  async function submitAttendance(employeeName, status){
+    const res = await fetch(API_URL,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({employeeName,status})
+    });
+    return await res.json();
+  }
+
+  function buildTable(data){
+    hideLoader();
+    const { employees, dates, statusMap, today } = data;
+    const headerRowDates=document.getElementById("headerRowDates");
+    const headerRowDays=document.getElementById("headerRowDays");
+    const tbody=document.querySelector("#attendanceTable tbody");
+
+    // Title
+    const monthNames=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const d=new Date(today);
+    document.getElementById("title").textContent=`Attendance (${monthNames[d.getMonth()]}-${d.getFullYear()})`;
+
+    headerRowDates.innerHTML='<th rowspan="2">#</th><th rowspan="2">Name</th>';
+    headerRowDays.innerHTML="";
+
+    // Build headers
+    dates.forEach(dateKey=>{
+      const dateObj=new Date(dateKey);
+      const day=dateObj.getDay();
+      const isSunday=(day===0);
+
+      const thDate=document.createElement("th");
+      thDate.textContent=dateObj.getDate();
+      if(dateKey===today) thDate.classList.add("today");
+      if(isSunday) thDate.classList.add("sunday");
+      headerRowDates.appendChild(thDate);
+
+      const thDay=document.createElement("th");
+      thDay.textContent=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][day];
+      if(dateKey===today) thDay.classList.add("today");
+      if(isSunday) thDay.classList.add("sunday");
+      headerRowDays.appendChild(thDay);
+    });
+
+    tbody.innerHTML="";
+    let count=1;
+    employees.forEach(emp=>{
+      const tr=document.createElement("tr");
+      tr.innerHTML=`<td>${count++}</td><td>${emp}</td>`;
+
+      dates.forEach(dateKey=>{
+        const td=document.createElement("td");
+        const status=statusMap[emp][dateKey]||"";
+        const day=new Date(dateKey).getDay();
+
+        if(dateKey===today){
+          const select=document.createElement("select");
+          ["","P","A","H"].forEach(opt=>{
+            const option=document.createElement("option");
+            option.value=opt;
+            option.textContent=opt||"--";
+            if(status===opt) option.selected=true;
+            select.appendChild(option);
+          });
+          select.addEventListener("change",async()=>{
+            showLoader();
+            const result=await submitAttendance(emp,select.value);
+            hideLoader();
+            document.getElementById("response").textContent=result.message;
+          });
+          td.appendChild(select);
+          td.classList.add("today");
+        }else{
+          td.textContent=status;
+          if(status==="P") td.classList.add("present");
+          if(status==="A") td.classList.add("absent");
+          if(status==="H") td.classList.add("holiday");
+        }
+        if(day===0) td.classList.add("sunday");
+        tr.appendChild(td);
       });
-      return await res.json();
-    }
+      tbody.appendChild(tr);
+    });
+  }
 
-    // ✅ Table Builder
-    function buildTable(data) {
-      hideLoader();
-      const { employees, dates, statusMap, today } = data;
-      const headerRowDates = document.getElementById("headerRowDates");
-      const headerRowDays = document.getElementById("headerRowDays");
-      const tbody = document.querySelector("#attendanceTable tbody");
-
-      // Title
-      const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-      const d = new Date(today);
-      document.getElementById("title").textContent = 
-        `Attendance (${monthNames[d.getMonth()]}-${d.getFullYear()})`;
-
-      // Reset headers
-      headerRowDates.innerHTML = '<th rowspan="2">#</th><th rowspan="2">Name</th>';
-      headerRowDays.innerHTML = "";
-
-      // Headers
-      dates.forEach(dateKey => {
-        const dateObj = new Date(dateKey);
-        const day = dateObj.getDay();
-        const isSunday = (day === 0);
-
-        const thDate = document.createElement("th");
-        thDate.textContent = dateObj.getDate();
-        if (dateKey === today) thDate.classList.add("today");
-        if (isSunday) thDate.classList.add("sunday");
-        headerRowDates.appendChild(thDate);
-
-        const thDay = document.createElement("th");
-        thDay.textContent = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][day];
-        if (dateKey === today) thDay.classList.add("today");
-        if (isSunday) thDay.classList.add("sunday");
-        headerRowDays.appendChild(thDay);
-      });
-
-      // Body
-      tbody.innerHTML = "";
-      let count = 1;
-      employees.forEach(emp => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${count++}</td><td>${emp}</td>`;
-
-        dates.forEach(dateKey => {
-          const td = document.createElement("td");
-          const status = statusMap[emp][dateKey] || "";
-          const day = new Date(dateKey).getDay();
-
-          if (dateKey === today) {
-            const select = document.createElement("select");
-            ["", "P", "A", "H"].forEach(opt => {
-              const option = document.createElement("option");
-              option.value = opt;
-              option.textContent = opt || "--";
-              if (status === opt) option.selected = true;
-              select.appendChild(option);
-            });
-            select.addEventListener("change", async () => {
-              showLoader();
-              const result = await submitAttendance(emp, select.value);
-              hideLoader();
-              document.getElementById("response").textContent = result.message;
-            });
-            td.appendChild(select);
-            td.classList.add("today");
-          } else {
-            td.textContent = status;
-            if (status === "P") td.classList.add("present");
-            if (status === "A") td.classList.add("absent");
-            if (status === "H") td.classList.add("holiday");
-          }
-
-          if (day === 0) td.classList.add("sunday");
-          tr.appendChild(td);
-        });
-
-        tbody.appendChild(tr);
-      });
-    }
-
-    // ✅ Init
-    window.onload = async function () {
-      showLoader();
-      const data = await getMonthlyAttendance();
-      buildTable(data);
-    };
-  </script>
-
+  // On load
+  window.onload=async()=>{
+    showLoader();
+    const data=await getMonthlyAttendance();
+    buildTable(data);
+  };
+</script>
 </body>
 </html>
